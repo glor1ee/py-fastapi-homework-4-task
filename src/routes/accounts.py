@@ -70,6 +70,7 @@ async def register_user(
         background_tasks: BackgroundTasks,
         db: AsyncSession = Depends(get_db),
         email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
+        settings: BaseAppSettings = Depends(get_settings),
 ) -> UserRegistrationResponseSchema:
     """
     Endpoint for user registration.
@@ -130,7 +131,7 @@ async def register_user(
         ) from e
     else:
         activation_link = (
-            f"http://127.0.0.1/accounts/activate/"
+            f"{settings.BASE_FRONTEND_URL}/accounts/activate/"
             f"?email={new_user.email}&token={activation_token.token}"
         )
         background_tasks.add_task(
@@ -177,6 +178,7 @@ async def activate_account(
         background_tasks: BackgroundTasks,
         db: AsyncSession = Depends(get_db),
         email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
+        settings: BaseAppSettings = Depends(get_settings),
 ) -> MessageResponseSchema:
     """
     Endpoint to activate a user's account.
@@ -231,7 +233,7 @@ async def activate_account(
     await db.delete(token_record)
     await db.commit()
 
-    login_link = "http://127.0.0.1/accounts/login/"
+    login_link = f"{settings.BASE_FRONTEND_URL}/accounts/login/"
     background_tasks.add_task(
         email_sender.send_activation_complete_email,
         user.email,
@@ -256,6 +258,7 @@ async def request_password_reset_token(
         background_tasks: BackgroundTasks,
         db: AsyncSession = Depends(get_db),
         email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
+        settings: BaseAppSettings = Depends(get_settings),
 ) -> MessageResponseSchema:
     """
     Endpoint to request a password reset token.
@@ -286,7 +289,7 @@ async def request_password_reset_token(
     await db.commit()
 
     reset_link = (
-        f"http://127.0.0.1/accounts/reset-password/complete/"
+        f"{settings.BASE_FRONTEND_URL}/accounts/reset-password/complete/"
         f"?email={user.email}&token={reset_token.token}"
     )
     background_tasks.add_task(
@@ -348,6 +351,7 @@ async def reset_password(
         background_tasks: BackgroundTasks,
         db: AsyncSession = Depends(get_db),
         email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
+        settings: BaseAppSettings = Depends(get_settings),
 ) -> MessageResponseSchema:
     """
     Endpoint for resetting a user's password.
@@ -410,7 +414,7 @@ async def reset_password(
             detail="An error occurred while resetting the password."
         )
 
-    login_link = "http://127.0.0.1/accounts/login/"
+    login_link = f"{settings.BASE_FRONTEND_URL}/accounts/login/"
     background_tasks.add_task(
         email_sender.send_password_reset_complete_email,
         data.email,

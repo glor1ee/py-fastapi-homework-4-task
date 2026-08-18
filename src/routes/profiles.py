@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,7 +68,8 @@ async def create_profile(
             detail="User already has a profile.",
         )
 
-    avatar_key = f"avatars/{target_user.id}_avatar.jpg"
+    extension = os.path.splitext(profile_data.avatar.filename or "")[1].lstrip(".").lower() or "jpg"
+    avatar_key = f"avatars/{target_user.id}_avatar.{extension}"
     avatar_bytes = await profile_data.avatar.read()
 
     try:
